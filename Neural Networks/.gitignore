@@ -1,0 +1,7 @@
+.ipynb_checkpoints/
+
+.vscode/
+
+*idx*
+
+all_three_sets.npy
