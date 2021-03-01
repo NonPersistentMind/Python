@@ -1,0 +1,15 @@
+bob
+name => 'Bob Smith'
+age => 40
+job => 'dev'
+pay => 30000
+sue
+name => 'Sue Jones'
+age => 45
+pay => 40000
+job => 'hdw'
+tom
+name => 'Tompson'
+age => 30
+pay => 0
+job => None
