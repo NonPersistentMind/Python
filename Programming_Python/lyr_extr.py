@@ -3,7 +3,7 @@ indentation_symbol = "==========================================================
 
 from lyrics_extractor import Song_Lyrics
 
-extract_lyrics = Song_Lyrics("AIzaSyBEwhDp44sXUuxQtrIbTf8xYOXdTeoV73E","001200559815098048530:uudninpweee")
+extract_lyrics = Song_Lyrics("GOOGLEKEY")
 
 while True:
     song_words = input("Enter the song of your interest: ")
