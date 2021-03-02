@@ -1,5 +1,7 @@
-from types import resolve_bases
-from keras.applications import VGG16
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+
+from keras.applications import VGG16 as VGG
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow.keras import layers, models, optimizers, losses, metrics
@@ -15,16 +17,16 @@ CURRENT_MODE = modes[1]
 
 # ================================ Define A Model ================================
 
-train_datagen = ImageDataGenerator(rescale=1/255) if CURRENT_MODE == modes[0] else ImageDataGenerator(rescale=1/255, rotation_range=40, width_shift_range=0.2,
-                                                                                                      height_shift_range=0.2, shear_range=0.2,
-                                                                                                      zoom_range=0.2, horizontal_flip=True, fill_mode='nearest')
+train_datagen = ImageDataGenerator(rescale=1/255) if CURRENT_MODE == modes[0] else ImageDataGenerator(rescale=1/255, rotation_range=50, width_shift_range=0.3,
+                                                                                                      height_shift_range=0.3, shear_range=0.3,
+                                                                                                      zoom_range=0.3, horizontal_flip=True, fill_mode='nearest')
 test_datagen = ImageDataGenerator(rescale=1/255)
 
 
 batch_size = 20
-EPOCHS = 30
+EPOCHS = 20
 
-conv_base = VGG16(weights="imagenet", include_top=False,
+conv_base = VGG(weights="imagenet", include_top=False,
                   input_shape=(150, 150, 3))
 
 
@@ -71,14 +73,14 @@ if 'extraction' in CURRENT_MODE:
 
         network.compile(optimizer=optimizers.RMSprop(),
                         loss=losses.binary_crossentropy,
-                        metrics=[metrics.binary_accuracy])
+                        metrics=['accuracy'])
 
         history = network.fit(train_features, train_labels, batch_size=batch_size,
                               epochs=EPOCHS, validation_data=(validation_features, validation_labels))
 
 
     # ================== Feature Extraction With Data Augmentation ===================
-    elif CURRENT_MODE == modes[1]:
+    else:
         train_generator = train_datagen.flow_from_directory(data_folders['train'], target_size=(150,150), class_mode='binary', batch_size=batch_size)
         validation_generator = test_datagen.flow_from_directory(data_folders['validation'], target_size=(150,150), class_mode='binary', batch_size=batch_size)
 
@@ -87,19 +89,38 @@ if 'extraction' in CURRENT_MODE:
         network.add(conv_base)
         network.add(layers.Flatten())
         network.add(layers.Dense(256, activation='relu'))
+        # network.add(layers.Dropout(0.4))
         network.add(layers.Dense(1, activation='sigmoid'))
 
-        network.compile(optimizer=optimizers.RMSprop(lr=2e-5),
+        network.compile(optimizer=optimizers.RMSprop(lr=5e-4),
                         loss=losses.binary_crossentropy,
-                        metrics=[metrics.binary_accuracy])
+                        metrics=['accuracy'])
 
-        history = network.fit(train_generator, batch_size=batch_size,
+        network.fit(train_generator, batch_size=batch_size,
                               epochs=EPOCHS, validation_data=validation_generator, steps_per_epoch=100, validation_steps=50)
 
+        
 
-# ============================= Complete Fine-Tuning =============================
-else:
-    raise NotImplementedError()
+        # network.compile(optimizer=optimizers.RMSprop(lr=2e-5),
+        #                 loss=losses.binary_crossentropy,
+        #                 metrics=['accuracy'])
+
+        # network.fit(train_generator, batch_size=batch_size,
+        #                       epochs=EPOCHS, validation_data=validation_generator, steps_per_epoch=100, validation_steps=50)
+
+        # ============================= Complete Fine-Tuning =============================
+        trainable = False
+        for layer in conv_base.layers:
+            if layer.name == 'block5_conv1':
+                trainable = True
+            layer.trainable = trainable
+        
+        network.compile(optimizer=optimizers.RMSprop(lr=2e-5), loss=losses.binary_crossentropy, metrics=['accuracy'])
+
+        history = network.fit(train_generator, epochs=EPOCHS, steps_per_epoch=100, validation_data=validation_generator, validation_steps=50)
+
+
+
 
 # ========================= Plotting Network Performance =========================
 
@@ -107,8 +128,8 @@ epochs = range(1, EPOCHS+1)
 
 plt.figure(figsize=(15, 7), dpi=100).suptitle('Network Performance')
 plt.subplot(1, 2, 1)
-plt.plot(epochs, history.history['binary_accuracy'], label='Accuracy')
-plt.plot(epochs, history.history['val_binary_accuracy'], label='Val Accuracy')
+plt.plot(epochs, history.history['accuracy'], label='Accuracy')
+plt.plot(epochs, history.history['val_accuracy'], label='Val Accuracy')
 plt.legend(loc='lower right')
 plt.xlabel('Epochs')
 plt.ylabel('Accuracy')

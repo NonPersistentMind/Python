@@ -19,7 +19,7 @@ joinpath = os.path.join
 
 # ==================== Move the data to corresponding folders ====================
 
-data_location = '/home/andrew_lick/Desktop/Books_lib/Keras Projects/Cats&Dogs/Datasets'
+data_location = '/home/andrew_lick/Desktop/Books_lib/Python/Keras Projects/Cats&Dogs/Datasets'
 data_operations = ['train', 'validation', 'test']
 labels = ['cat', 'dog']
 data_sources = {
