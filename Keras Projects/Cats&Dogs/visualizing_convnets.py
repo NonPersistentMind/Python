@@ -9,11 +9,6 @@ import tensorflow as tf
 tf.compat.v1.disable_eager_execution()
 
 
-# Visualizing procedures:
-# "Intermediate Learnings"
-# "Closest Filters' Activation"
-# "Heatmaps"
-
 def normalize_image(image_arr):
     new_image = np.copy(image_arr)
 
@@ -32,15 +27,21 @@ def step(iteration, ):
 
 # ========================== Choosing Current Procedure ==========================
 
-PROCEDURE = "Closest Filters' Activation"
+# Visualizing procedures:
+# "Intermediate Learnings"
+# "Closest Filters' Activation"
+# "Heatmaps"
 
-# ==============================================================================
+PROCEDURE = "Heatmaps"
+
+# ================================================================================
 
 
 network = models.load_model(
     './Pretrained_Model/cats-dogs_v2_dropout_100epochs.h5')
 
-
+# ================= Look at the activation intensity of different ================
+# ======================== layers, using a specific image ========================
 if PROCEDURE == "Intermediate Learnings":
     model = models.Model(inputs=network.input, outputs=[
         layer.output for layer in network.layers[:8]])
@@ -83,18 +84,21 @@ if PROCEDURE == "Intermediate Learnings":
 
     plt.show()
 
-elif PROCEDURE == "Closest Filters' Activation":
 
+# =========================== Look at different images ===========================
+# =============== that excite filters in different layers the most ===============
+
+elif PROCEDURE == "Closest Filters' Activation":
     # ========================== Procedure-Specific imports ==========================
     from keras.applications import VGG16 as VGG
     from keras import backend as K
-    # ==============================================================================
+    # ================================================================================
 
     # network = VGG(True, 'imagenet')
     network = models.load_model('Pretrained_Model/cats-dogs_v2_nodropout.h5')
 
 
-# 'block' in layer.name and 
+#   'block' in layer.name and 
     layers_to_extract = [layer for layer in network.layers if ( 'conv' in layer.name)]
     
     for layer in layers_to_extract:
@@ -104,8 +108,8 @@ elif PROCEDURE == "Closest Filters' Activation":
         plt.axis(False)
 
         columns = 16
-        displayed_filters = 64
-        rows = displayed_filters//columns
+        displayed_filters = 64  # a power of 2, to avoid adding 1 to rows
+        rows = displayed_filters//columns + (0 if (displayed_filters%columns == 0) else 1)
         margin = 5
         image_size = 150
 
@@ -121,9 +125,7 @@ elif PROCEDURE == "Closest Filters' Activation":
 
             iterate = K.function(inputs=[network.input], outputs=[loss, grad])
 
-            # loss_value, grad_value = iterate( [np.zeros(shape=(1, image_size, image_size, 3))] )
-
-            image = np.random.random((1,image_size,image_size,3))*20 + 128
+            image = np.random.random((1, image_size, image_size, 3))*20 + 128
 
             for j in range(40):
                 _, gradient_value = iterate([image])
@@ -133,8 +135,8 @@ elif PROCEDURE == "Closest Filters' Activation":
             formatted_image = np.clip(normalize_image(image), 0, 255).astype('uint8')
             # print(np.min(formatted_image), np.max(formatted_image))
             # raise Exception()
-            
-            col_start = i%columns * image_size + max(i%columns-1, 0)*margin
+
+            col_start = i % columns * image_size + max(i % columns-1, 0)*margin
             col_end = col_start + image_size
             row_start = i//columns * image_size + max(i//columns-1, 0)*margin
             row_end = row_start + image_size
@@ -147,8 +149,78 @@ elif PROCEDURE == "Closest Filters' Activation":
 
         plt.show()
 
+
+# ============== Superimpose layer's weighted activation intensity ===============
+# ============ Over a real image. It helps to determine, which pixels ============
+# ========= are the most responsible for specific network's predictions ==========
+
 elif PROCEDURE == "Heatmaps":
-    pass
+    # ========================== Procedure-Specific imports ==========================
+    from keras.applications import VGG16 as VGG
+    from keras import backend as K
+    import cv2
+    from keras.preprocessing import image
+    from keras.applications.vgg16 import preprocess_input, decode_predictions
+    # ================================================================================
+
+    network = VGG(include_top=True, weights='imagenet')
+    
+    img_path = 'Datasets/test/dogs/dog.1515.jpg'
+    img = image.load_img(img_path, target_size=(224,224))
+
+    img_arr = image.img_to_array(img)
+    img_arr = np.expand_dims(img_arr, axis=0)
+    img_arr = preprocess_input(img_arr)
+
+    predictions = network.predict(img_arr)
+
+    # print( np.argmax(predictions) )   # -------> Returns 253 for the image in string
+    # print( decode_predictions(predictions)[0] )   # -------> Has 0.86 confidence in German Shepherd
+
+    last_layer_output = network.get_layer('block5_conv3').output
+    german_sherperd_output = network.output[:,235]
+
+    grads = K.gradients(german_sherperd_output, last_layer_output)[0]
+    # print(grads.shape)    # -------> Has (None, 14, 14, 512) shape
+
+    pooled_grads = K.mean(grads, axis=(1,2,3))  # A vector of average filters' impact on predicting thing in K.gradients( HERE, ... )
+    # Returns a filter-wise mean. That is, a vector of size 512, containig means on every available filter
+
+    iterate = K.function(inputs=[network.input], outputs=[pooled_grads, last_layer_output[0]])
+
+    computed_grads, computed_conv_output = iterate([img_arr])
+    for i in range(len(computed_grads)):
+        computed_conv_output[:, :, i] *= computed_grads[i]
+
+    heatmap = K.mean(tf.convert_to_tensor( computed_conv_output ), axis=-1)
+    # print(K.get_value(heatmap))
+
+    heatmap = np.maximum(K.get_value(heatmap), 0)
+    heatmap /= np.max(heatmap)
+
+    plt.matshow(heatmap, cmap='plasma')
+    # plt.show()
+
+
+    # ====================== Superimposing Heatmap Over Picture ======================
+
+    img = cv2.imread(img_path)
+    # print(type(img))  # -------> np.ndarray
+
+    heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+    heatmap = np.uint8(255*heatmap)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+
+    intensity = 0.4
+    superimposed_img = np.uint8(np.clip(img + intensity*heatmap, 0, 255))
+
+    cv2.imwrite('picture.png', img)
+    cv2.imwrite('superimposed_picture.png', superimposed_img)
+
+
+
+    
+
 
 
 
