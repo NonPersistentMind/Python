@@ -1,5 +1,5 @@
-Training own or using pretrained VGG convolutional NNs to differentiate cats and dogs.
+Training own: `Cats_Dogs_classification.py` and using pretrained VGG: `Using_Pretrained_Net.py` convolutional NNs to differentiate cats and dogs.
 
-Also visualizing neural networks learning process using different techniques found in visualizing_convnets.py
-
+Also visualizing neural networks learning process `visualizing_convnets.py` using different techniques 
+or
 ![Screenshot](picture.png) ![Screenshot](superimposed_picture.png)
