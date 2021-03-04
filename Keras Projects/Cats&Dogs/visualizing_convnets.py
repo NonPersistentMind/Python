@@ -32,7 +32,7 @@ def step(iteration, ):
 # "Closest Filters' Activation"
 # "Heatmaps"
 
-PROCEDURE = "Heatmaps"
+PROCEDURE = "Closest Filters' Activation"
 
 # ================================================================================
 
@@ -94,8 +94,8 @@ elif PROCEDURE == "Closest Filters' Activation":
     from keras import backend as K
     # ================================================================================
 
-    # network = VGG(True, 'imagenet')
-    network = models.load_model('Pretrained_Model/cats-dogs_v2_nodropout.h5')
+    network = VGG(False, 'imagenet')
+    # network = models.load_model('Pretrained_Model/cats-dogs_v2_nodropout.h5')
 
 
 #   'block' in layer.name and 
