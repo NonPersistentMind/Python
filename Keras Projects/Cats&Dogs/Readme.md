@@ -2,4 +2,4 @@ Training own: `Cats_Dogs_classification.py` and using pretrained VGG: `Using_Pre
 
 Also visualizing neural networks learning process `visualizing_convnets.py` using different techniques
 
-![Screenshot](picture.png) ![Screenshot](superimposed_picture.png)
+![Screenshot](Pictures/picture.png) ![Screenshot](Pictures/superimposed_picture.png)
