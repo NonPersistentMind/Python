@@ -4,7 +4,11 @@
 
 * **I_S_Labs:** Contains university course works on Informational systems
 
-* **Keras Projects:** Contains different projects, using tensorflow and keras
+* **Keras Projects:** Contains tensorflow and keras projects such as:
+    * __Movie reviews classification__
+    * __Newspaper articles classification__
+    * __House Prices Regression__
+    * __Cats and Dogs classification__
 
 * **Mathematical Statistics:** Holds projects, divided by chapters, guided by ***Mathematical Statistics by Richard J. Larsen, Morris L. Marx***
 
