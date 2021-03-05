@@ -16,4 +16,6 @@
 
 * **Programming Python:** A folder with many different little projects from ***Programming Python by Mark Lutz***
 
+*  **Cuda:** Currently in-development project for studying cuda
+
 
