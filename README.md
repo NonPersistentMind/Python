@@ -1,9 +1,5 @@
 # Python
 
-* **Computation, complexity, languages:** Some important programs for computational theory 
-
-* **I_S_Labs:** Contains university course works on Informational systems
-
 * **Keras Projects:** Contains tensorflow and keras projects such as:
     * __Movie reviews classification__
     * __Newspaper articles classification__
@@ -18,4 +14,6 @@
 
 *  **Cuda:** Currently in-development project for studying cuda
 
+* **Telegram:** Sub-repository containing telegram bots implementations. Currently has:
+   * __ImageEncriptionBot__ — a bot that encrypts any Unicode text message in a given image pixels.
 
