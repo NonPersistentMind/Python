@@ -1,3 +1,0 @@
-class llist(list):
-    pass
-
